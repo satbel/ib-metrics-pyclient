@@ -22,9 +22,9 @@ def get_brokers_status(brokers_data):
     brokers = list()
     for record in filter(None, output_list):
         record_list = record.split()
-        broker_name = record_list[2].replace("'", "")
-        qm_name = record_list[6].replace("'", "")
-        status = record_list[8].replace("'", "")
+        broker_name = record_list[3].replace("'", "")
+        qm_name = record_list[19].replace("'", "").replace(".","")
+        status = record_list[15].replace("'", "")
         brokers.append([broker_name, status, qm_name])
     return brokers
 
@@ -55,14 +55,19 @@ def get_broker_items(broker_row_data):
 
 def format_broker(broker_name, status, qm_name):
     """Returns string with all metrics for broker which ready to push to pushgateway."""
+    print("broker name :",broker_name)
+    print("qmname :",qm_name)
+    print("status :",status)
     metrics_annotation = get_metric_annotation()
     template_string = 'brokername="{0}", qmname="{1}"'.format(
         broker_name,
         qm_name)
+    print(template_string)
     broker_metric = '{0}{{{1}}} {2}\n'.format(
         get_metric_name(metric_label='status'),
         template_string,
         get_status(status=status))
+    print(broker_metric)
     broker_metric = '{0}{1}'.format(
         metrics_annotation['status'],
         broker_metric)

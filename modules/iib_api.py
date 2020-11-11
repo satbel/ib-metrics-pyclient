@@ -6,7 +6,7 @@ import subprocess
 def run_iib_command(**kwargs):
     """Calls predefined commands and returns their result."""
     command_mapping = {
-        'get_brokers_status': 'mqsilist | grep Broker',
+        'get_brokers_status': 'mqsilist | grep Integration',
         'get_broker_objects': 'mqsilist {0} -r',
     }
     broker = str()
@@ -37,6 +37,6 @@ def execute_command(command):
 def get_status(status):
     """Returns a numeric status value."""
     status_map = {
-        'running.': 1,
-        'stopped.': 0}
+        'running': 1,
+        'stopped': 0}
     return status_map[status]
