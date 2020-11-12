@@ -34,8 +34,8 @@ def static_content():
 
 def put_metric_to_gateway(metric_data, job):
     """Sends data to Prometheus pushgateway."""
-    hostname = platform.node()
-    port = 9091
+    hostname = sys.argv[1]
+    port = sys.argv[2]
     src_url = "http://{0}:{1}".format(hostname, port)
     headers = {"Content-Type": "text/plain; version=0.0.4"}
     dest_url = "{0}/metrics/job/{1}".format(src_url, job)
