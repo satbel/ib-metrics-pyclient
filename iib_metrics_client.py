@@ -5,6 +5,7 @@ import time
 import traceback
 import platform
 import requests
+import socket
 from requests import ConnectionError
 from urllib3.exceptions import ResponseError
 from modules.iib_brokers import (
@@ -31,6 +32,18 @@ def static_content():
     version = "0.2"
     return '{0} v.{1}'.format(name, version)
 
+def clear_metric_from_gateway(job):
+    """Clear old metrics from pushgateway."""
+    hostname = sys.argv[1]
+    port = sys.argv[2]
+    del_url = "http://{0}:{1}/metrics/job/{2}".format(hostname, port, job)
+    try:
+        response = requests.delete(del_url)
+        if not response.status_code == 202:
+            raise PrometheusBadResponse("Bad response deleting - {0} from {1}\nResponseText: {2}".format(response, del_url, response.text))
+        logger.info("Cleared previous metrics! Server response: {0}".format(response))
+    except (ConnectionError, ResponseError):
+        raise PrometheusBadResponse("{0} is not available!".format(del_url))
 
 def put_metric_to_gateway(metric_data, job):
     """Sends data to Prometheus pushgateway."""
@@ -53,7 +66,9 @@ def put_metric_to_gateway(metric_data, job):
 
 def main():
     start_time = time.time()
-    logger.info("Starting metrics collecting for Integration Bus!")
+    host_name = socket.gethostname()
+    logger.info("Starting metrics collecting for Integration Bus! on {0}".format(host_name))
+    clear_metric_from_gateway(job=host_name)
     try:
         brokers_data = run_iib_command(task='get_brokers_status')
         brokers = get_brokers_status(brokers_data=brokers_data)
@@ -76,10 +91,10 @@ def main():
                     exec_groups_data,
                     applications_data,
                     message_flows_data)
-                put_metric_to_gateway(metric_data=metric_data, job=broker_name)
+                put_metric_to_gateway(metric_data=metric_data, job=host_name)
                 logger.info("All metrics pushed successfully!")
             else:
-                put_metric_to_gateway(metric_data=broker_data, job=broker_name)
+                put_metric_to_gateway(metric_data=broker_data, job=host_name)
                 logger.warning("The status of broker is {0}\nOther metrics will not be collected!".format(status))
         logger.info("Script finished in - {0} seconds -".format(time.time() - start_time))
     except PrometheusBadResponse as error:
